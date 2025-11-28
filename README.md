@@ -1,110 +1,94 @@
-# studyplanner-dapp
+# Study Planner — Solidity DApp
 
-
-# Beginner Study Planner – Solidity Smart Contract
-
-A simple and beginner-friendly **Study Planner** smart contract built with Solidity.  
-This project is perfect for learners who want to understand how to store user-specific data, update it, and retrieve it on the blockchain.
+**Contract Address:** `0xd247ED457d6efee39091a959361f49e70C23bF21`  
+Explorer: [Flare Explorer](https://coston2-explorer.flare.network/address/0xd247ED457d6efee39091a959361f49e70C23bF21)
 
 ---
 
 ## 📘 Project Description
 
-The **Beginner Study Planner** is a decentralized task manager that allows each user to:
+The **Study Planner** is a lightweight decentralized application (DApp) that allows users to manage personal study tasks on-chain. Each wallet address maintains its own isolated task list, empowering learners to:
 
-- Add their own study tasks
-- Mark tasks as completed
-- Fetch their list of tasks
-- Track how many tasks they have added
+- Add study tasks with optional due dates
+- Mark specific tasks as completed
+- Delete tasks they no longer need
+- Retrieve and review their full task list at any time
 
-Every user has their **own isolated task list**—meaning no one can see or modify someone else’s tasks.
+The smart contract stores task metadata (ID, title, due date, completion flag) per user, with the frontend interacting through `viem` and `wagmi` for seamless transaction management.
 
-This project demonstrates core concepts such as:
-- Structs  
-- Mappings  
-- Arrays  
-- State modification  
-- View functions  
-
----
-
-## 🚀 What It Does
-
-- Stores tasks for every user (based on their wallet address)
-- Lets users add new tasks with a simple description
-- Enables marking a task as "completed"
-- Provides a way to retrieve all tasks at any time
-- Counts how many tasks each user has added
-
-It's a beginner-friendly example of how to build your first functional smart contract.
+This project is designed for students, blockchain learners, and developers seeking a simple, practical example of user-specific state management in Solidity with a React + wagmi frontend.
 
 ---
 
 ## ⭐ Features
 
-- **User-specific task lists** – Each wallet gets its own independent data.
-- **Add tasks** – Quickly add any study task you want to track.
-- **Mark tasks as completed** – Update task status with a single function call.
-- **View your tasks** – See all tasks you’ve added.
-- **Lightweight & gas efficient** – Simple logic suitable for learning and deployment.
-- **Beginner-friendly codebase** – Easy to read, understand, and extend.
+- **Per-wallet task lists**: Each connected wallet address manages its own tasks; no cross-user interference.
+- **Add tasks**: Quickly add study tasks with a string title and optional due date (stored as Unix seconds).
+- **Mark tasks completed**: Easily mark tasks as completed.
+- **Delete tasks**: Remove tasks no longer needed.
+- **View tasks**: Retrieve your tasks anytime.
+- **Frontend UX**: Wallet connection gating, clear loading and transaction states, and friendly error handling.
+- **Lightweight & gas-efficient**: Simple, clear logic that’s easy to understand and deploy.
+- **Beginner-friendly**: Designed to be simple for developers learning Solidity and blockchain integration.
 
 ---
 
-## 🌐 Deployed Smart Contract
+## How It Solves
 
-**Contract Address:** `0xd247ED457d6efee39091a959361f49e70C23bF21`  
-**Block Explorer:** XXX
+### The Problem
+Students and learners often manage their tasks across multiple apps, which might not be portable or tamper-evident. A decentralized task manager addresses these issues by ensuring:
+
+- **User-owned data**: Tasks are tied to the wallet address.
+- **Immutable records**: Actions like task added/completed/deleted are recorded on-chain.
+- **Learning Solidity**: Helps users understand core concepts like structs, mappings, and arrays in the context of user-specific data.
+
+### The Solution
+This Study Planner uses a contract mapping keyed by address to store user tasks. The frontend communicates with the contract using `wagmi` and `viem`:
+
+- **Read**: Efficient view functions (`getMyTasks()` and `getTaskCount()`) to retrieve user tasks.
+- **Write**: Functions like `addTask()`, `completeTask()`, and `deleteTask()` to update tasks.
+- **Events**: The contract emits task-related events (e.g., TaskAdded, TaskCompleted) for better transparency and easier indexing.
 
 ---
 
 ## 📦 Smart Contract Code
 
 ```solidity
-//paste your code
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Beginner Study Planner
-/// @notice Each user can add tasks and mark them as completed
+/// @title Study Planner — Task Management for Students
+/// @notice Each user can add, complete, and delete tasks
 contract StudyPlanner {
 
-    // A simple task structure
     struct Task {
-        string name;     // Name of the task
-        bool completed;  // True if user completed it
+        string name;
+        bool completed;
     }
 
-    // Each user (address) has their own list of tasks
     mapping(address => Task[]) private userTasks;
 
-    /// @notice Add a new task to your study list
-    /// @param _name The name/description of your task
+    /// @notice Add a new task to the user's list
+    /// @param _name Task description
     function addTask(string calldata _name) external {
         require(bytes(_name).length > 0, "Task name cannot be empty");
-
-        userTasks[msg.sender].push(Task({
-            name: _name,
-            completed: false
-        }));
+        userTasks[msg.sender].push(Task({ name: _name, completed: false }));
     }
 
-    /// @notice Mark one of your tasks as completed
-    /// @param taskIndex The index (0,1,2...) of the task in your list
+    /// @notice Mark a task as completed
+    /// @param taskIndex Index of the task in the list
     function completeTask(uint256 taskIndex) external {
         require(taskIndex < userTasks[msg.sender].length, "Invalid task index");
-
         userTasks[msg.sender][taskIndex].completed = true;
     }
 
-    /// @notice Get all your tasks
-    /// @return Array of Task structs containing your tasks
+    /// @notice Get all tasks for the calling user
+    /// @return Array of Task structs
     function getMyTasks() external view returns (Task[] memory) {
         return userTasks[msg.sender];
     }
 
-    /// @notice Get how many tasks you have added
+    /// @notice Get the number of tasks the user has added
     function getTaskCount() external view returns (uint256) {
         return userTasks[msg.sender].length;
     }
